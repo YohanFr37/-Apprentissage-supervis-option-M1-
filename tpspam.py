@@ -12,28 +12,6 @@ def lireMail(fichier, dictionnaire):
 
 	x = [False] * len(dictionnaire)
 
-	# à modifier...
-	"""
-	for i in range(0,len(mots)-1):
-
-		for j in range(0,len(dictionnaire)-1):
-			if(mots[i].upper() == dictionnaire[j]):
-				print(dictionnaire[j])
-				x[i] = True
-				a+=1
-				#print(str(a) + " "+ str(i))
-				#print("coucou")
-				break
-			#print("mots " + str(mots[i]) + " dico " + str(dictionnaire[j]))
-	print(a)
-	
-	for i in range(0,len(mots)-1):
-		if(mots[i].upper() in dictionnaire):
-
-			x[i] = True
-			b += 1
-			#print(str(b) + " "+ str(i))
-	"""
 	for i in range(len(dictionnaire)):
 		if (dictionnaire[i] in list(map(str.upper, mots))):
 			x[i] = True
@@ -44,17 +22,16 @@ def lireMail(fichier, dictionnaire):
 def charge_dico(fichier):
 	f = open(fichier, "r")
 	motstempo = f.read().split("\n")
-
-	indiceMot = 0
 	mots = []
 	for i in range(len(motstempo)):
-		# Si le mot fait 3 lettres ou plus, on le garde
+		# Filtre les mots de moins de 3 lettres
 		if (len(motstempo[i]) >= 3):
 			mots.append(motstempo[i])
-
+	motsOutil = ['YOU','YES','FOR','WHILE','ALSO','TOO','BECAUSE','THEN','YET','NEVER','THIS','THAT','THE','THESE','THUS','SINCE','THEREFORE','ACTUALLY','BUT','INDEED','FROM']
+	for i in motsOutil:
+		mots.remove(i)
 	print("Chargé " + str(len(mots)) + " mots dans le dictionnaire")
 	f.close()
-
 	return mots[:-1]
 
 
@@ -66,16 +43,31 @@ def apprendBinomial(dossier, fichiers, dictionnaire):
 	"""
 
 
+	#y = []
+	#b = []
+	#e = 1 #Epsilon
+	#for path in range(int(len(fichiers)/5)):
+	#	y.append(lireMail(dossier+"/"+str(path)+".txt", dictionnaire))
+	#	# Calcul des probas
+	#y = np.array(y)
+	#print(y)
+	#for path in range(int(len(dictionnaire))):
+	#	b.append((np.sum(y[:,path])+e)/((len(fichiers)/5)+2*e))
+	#print(len(b))
+	#b = 0  # à modifier...
+	#return np.array(y),np.array(b)
+
+
 	y = []
 	b = []
-
-	for path in range(len(fichiers)):
+	e = 1 #Epsilon
+	for path in range(int(len(fichiers)/4)):
 		y.append(lireMail(dossier+"/"+str(path)+".txt", dictionnaire))
 		# Calcul des probas
-		b.append(np.sum(y, 1)[path]/len(fichiers))
-		#print(b)
-	#b = 0  # à modifier...
-	return b
+	y = np.array(y)
+	for path in range(int(len(dictionnaire))):
+		b.append((np.sum(y[:,path])+e)/((len(fichiers)/4)+2*e))
+	return np.array(b)
 
 
 def prediction(x, Pspam, Pham, bspam, bham):
@@ -85,8 +77,18 @@ def prediction(x, Pspam, Pham, bspam, bham):
 		Retourne True ou False.
 		
 	"""
-
-	return False  # à modifier...
+	#isSpam = [len(x)]
+	#for i in range(len(x)):
+		#print(x[i])
+	#print(np.sum(x))
+	spam = (1/np.sum(x))*Pspam*np.sum((bspam**x)*(1-bspam**(1-x)))
+	ham = (1/np.sum(x))*Pham*np.sum((bham**x)*(1-bham**(1-x)))
+	print(spam)
+	print(ham)
+	print
+	#isSpam.append(spam>ham)
+	#print(spam>ham)
+	return spam>ham
 
 
 def test(dossier, isSpam, Pspam, Pham, bspam, bham):
@@ -98,48 +100,76 @@ def test(dossier, isSpam, Pspam, Pham, bspam, bham):
 		Retourne le taux d'erreur 
 	"""
 	fichiers = os.listdir(dossier)
-	for fichier in fichiers:
-		print("Mail " + dossier+"/"+fichier)
+	#for fichier in fichiers:
+		#print("Mail " + dossier+"/"+fichier)
 
 		# à compléter...
-
 	return 0  # à modifier...
 
 
 ############ programme principal ############
 
+e = 1 # Epsilon
+
 dossier_spams = "spam/baseapp/spam"  # à vérifier
 dossier_hams = "spam/baseapp/ham"
+
+dossier_test_spams = "spam/basetest/spam/" 
+dossier_test_hams = "spam/basetest/ham/"
 
 fichiersspams = os.listdir(dossier_spams)
 fichiershams = os.listdir(dossier_hams)
 
+P = (len(fichiersspams)+len(fichiershams))
+Pspam = len(fichiersspams)/P
+Pham = len(fichiershams)/P
+
 mSpam = len(fichiersspams)
 mHam = len(fichiershams)
-
+mSpam = 200
+mHam = 200
 # Chargement du dictionnaire:
 dictionnaire = charge_dico("spam/dictionnaire1000en.txt")
 # print(dictionnaire)
-
+xspam = [mSpam]
+xham = [mHam]
+for i in range(mSpam):
+	xspam.append(lireMail(dossier_test_spams+"/"+str(i)+".txt",dictionnaire))
+	#print(xspam[i])
+for i in range(mHam):
+	xham.append(lireMail(dossier_test_hams+"/"+str(i)+".txt",dictionnaire))
+#xspam=lireMail(dossier_test_spams,dictionnaire)
+#xham=lireMail(dossier_test_hams,dictionnaire)
 # Apprentissage des bspam et bham:
 print("apprentissage de bspam...")
 bspam = apprendBinomial(dossier_spams, fichiersspams, dictionnaire)
 print("apprentissage de bham...")
 bham = apprendBinomial(dossier_hams, fichiershams, dictionnaire)
-print(bspam)
-print(bham)
-"""
-initial_count = 0
 # Calcul des probabilités a priori Pspam et Pham:
-
+#Pspam = len(bspam)/(len(bspam)+len(bham))
+#Pham = 1 - Pspam
 yham = []
-Pham = []
 
-for path in range(len(fichiershams)):
-	yham.append(lireMail(dossier_hams+"/"+str(path)+".txt", dictionnaire))
-	# Calcul des probas
-	Pham.append(np.sum(yham, 1)[path]/len(fichiershams))
-print(Pham)
+#prediction(xspam, Pspam, Pham, bspam, bham)
+#prediction(xham, Pspam, Pham, bspam, bham)
+xspam = np.asarray(xspam[1:])
+xham = np.asarray(xham[1:])
+isSpam = [mSpam]
+for i in range(mSpam):
+	isSpam.append(prediction(xspam[i], Pspam, Pham, bspam, bham))
+isSpamB = [mHam]
+for i in range(mHam):
+	isSpamB.append(prediction(xham[i], Pspam, Pham, bspam, bham))
+print(np.sum(isSpam))
+print(np.sum(isSpamB))
+#print(xspam[1])
+#print(len(isSpam))
+#print(prediction(xham, Pspam, Pham, bspam, bham))
+#print(x)
+#test(dossier_test_spams, 0, Pspam, Pham, bspam, bham)
+#test(dossier_test_hams, 0, Pspam, Pham, bspam, bham)
+
+"""
 
 # Calcul des erreurs avec la fonction test():
 """
