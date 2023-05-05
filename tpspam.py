@@ -1,14 +1,31 @@
 import numpy as np
 import os
 import math
+import re
 
 
 def lireMail(fichier, dictionnaire):
-	""" 
-	Lire un fichier et retourner un vecteur de booléens en fonctions du dictionnaire
-	"""
+	#""" 
+	#Lire un fichier et retourner un vecteur de booléens en fonctions du dictionnaire
+	#"""
 	f = open(fichier, "r", encoding="ascii", errors="surrogateescape")
-	mots = f.read().split(" ")
+	motsTempo = f.read().split(" ")
+
+	mots = []
+	"""
+	Sépare les mots des caractères qui ne sont pas des lettres
+	Exemple : "https://stackoverflow.com/questions/3845423/remove-empty-strings-from-a-list-of-strings" 
+	devient une liste : ["https", "stackoverflow", "com", "questions", "remove", "empty", "strings", "from","a","list","of","string" 
+	"""
+	for i in range(len(motsTempo)): 
+		#print(mots[i].encode('utf8','replace'))
+		tempo = re.split('[^a-zA-Z]',motsTempo[i])
+		#print(motss)
+		for j in range(len(tempo)):
+			mots.append(tempo[j])
+		#print()
+	mots = list(filter(lambda x: len(x) >=3, mots))
+	#print(mots)
 	x = [False] * len(dictionnaire)
 
 	for i in range(len(dictionnaire)):
@@ -102,6 +119,7 @@ def test(dossier, isSpam, Pspam, Pham, bspam, bham):
 
 ############ programme principal ############
 
+
 e = 1 # Epsilon
 
 dossier_spams = "spam/baseapp/spam"  # à vérifier
@@ -122,6 +140,7 @@ mSpam = len(fichiersspams)
 mHam = len(fichiershams)
 mSpam = 500
 mHam = 500
+
 # Chargement du dictionnaire:
 dictionnaire = charge_dico("spam/dictionnaire1000en.txt")
 
