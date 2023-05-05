@@ -12,7 +12,7 @@ def lireMail(fichier, dictionnaire):
 	x = [False] * len(dictionnaire)
 
 	for i in range(len(dictionnaire)):
-		#if (dictionnaire[i] in list(map(str.upper, mots))):
+		if (dictionnaire[i] in list(map(str.upper, mots))):
 			x[i] = True
 	f.close()
 	return x
@@ -42,7 +42,7 @@ def apprendBinomial(dossier, fichiers, dictionnaire):
 		
 	"""
 	b = []
-	for path in range(int(len(dictionnaire))):
+	for path in range(len(dictionnaire)):
 		b.append((np.sum(dossier[:,path])+e)/((len(fichiers))+2*e))
 	return np.array(b)
 
@@ -54,18 +54,12 @@ def prediction(x, Pspam, Pham, bspam, bham):
 		Retourne True ou False.
 		
 	"""
-	#isSpam = [len(x)]
-	#for i in range(len(x)):
-		#print(x[i])
-	#print(np.sum(x))
 	isSpam = [len(x)]
-	#print(len(x[0]))
-	#print(len(x))
 	Pspam_x = [len(x)]
 	Pham_x = [len(x)]
 	for i in range(len(x)):
-		spam = 1/np.sum(x[i])*Pspam*np.sum((bspam**x[i])*(1-bspam**(1-x[i])))
-		ham = 1/np.sum(x[i])*Pham*np.sum((bham**x[i])*(1-bham**(1-x[i])))
+		spam = np.log(1/np.sum(x[i]))+np.log(Pspam)+np.sum(np.log((bspam**x[i])*((1-bspam)**(1-x[i]))))
+		ham = np.log(1/np.sum(x[i]))+np.log(Pham)+np.sum(np.log((bham**x[i])*((1-bham)**(1-x[i]))))
 		Pspam_x.append(spam)
 		Pham_x.append(ham)
 		isSpam.append(spam>ham)
@@ -81,20 +75,29 @@ def test(dossier, isSpam, Pspam, Pham, bspam, bham):
 		Retourne le taux d'erreur 
 	"""
 	fichiers = os.listdir(dossier)
-	#print(len(isSpam))
-	#print(len(Pspam))
+	nbErreur = 0
 	for i in range(len(isSpam)):
-		#print(i)
-		print('SPAM Numéro ' + str(i) + ' P(Y=SPAM | X=x) = ' + str(Pspam[i]) + ', P(Y=HAM | X=x) = ' + str(Pham[i]))
-		if(Pspam>Pham):
-			print('=> identifié comme un SPAM')
+		print(i)
+		if(dossier == "spam/basetest/spam"):
+			print('SPAM Numéro ' + str(i) + ' P(Y=SPAM | X=x) = ' + str(Pspam[i]) + ', P(Y=HAM | X=x) = ' + str(Pham[i]))
+			if(Pspam[i]>Pham[i]):
+				print('=> identifié comme un SPAM')
+			else:
+				print('=> identifié comme un HAM *** erreur ***')
+				nbErreur = nbErreur+1
 		else:
-			print('=> identifié comme un HAM *** erreur ***')
+			print('HAM Numéro ' + str(i) + ' P(Y=SPAM | X=x) = ' + str(Pspam[i]) + ', P(Y=HAM | X=x) = ' + str(Pham[i]))
+			if(Pspam[i]<Pham[i]):
+				print('=> identifié comme un HAM')
+			else:
+				print('=> identifié comme un SPAM *** erreur ***')
+				nbErreur = nbErreur+1
+
 	#for fichier in fichiers:
 		#print("Mail " + dossier+"/"+fichier)
 
 		# à compléter...
-	return 0  # à modifier...
+	return nbErreur/len(Pspam)*100
 
 
 ############ programme principal ############
@@ -117,15 +120,16 @@ Pham = len(fichiershams)/P
 
 mSpam = len(fichiersspams)
 mHam = len(fichiershams)
-mSpam = 200
-mHam = 200
+mSpam = 500
+mHam = 500
 # Chargement du dictionnaire:
 dictionnaire = charge_dico("spam/dictionnaire1000en.txt")
-# print(dictionnaire)
+
 xbasespam = [int(len(fichiersspams))]
 xbaseham = [int(len(fichiershams))]
 xspam = [mSpam]
 xham = [mHam]
+
 print('baseapp/spam')
 for i in range(int(len(fichiersspams))):
 	xbasespam.append(lireMail(dossier_spams+"/"+str(i)+".txt",dictionnaire))
@@ -138,32 +142,24 @@ for i in range(mSpam):
 print('basetest/ham')
 for i in range(mHam):
 	xham.append(lireMail(dossier_test_hams+"/"+str(i)+".txt",dictionnaire))
-# Apprentissage des bspam et bham:
 
-# Calcul des probabilités a priori Pspam et Pham:
-yham = []
 xspam = np.asarray(xspam[1:])
 xham = np.asarray(xham[1:])
 xbasespam = np.asarray(xbasespam[1:])
 xbaseham = np.asarray(xbaseham[1:])
+# Apprentissage des bspam et bham:
 print("apprentissage de bspam...")
-#print(xbasespam[1])
 bspam = apprendBinomial(xbasespam, fichiersspams, dictionnaire)
-#print(len(bspam))
 print("apprentissage de bham...")
 bham = apprendBinomial(xbaseham, fichiershams, dictionnaire)
-isSpam, Pspam_x, Pham_x = prediction(xspam, Pspam, Pham, bspam, bham)
-print(len(Pham_x))
-print(len(isSpam))
-print()
-test(dossier_test_spams, isSpam, Pspam_x, Pham_x, bspam, bham)
-#print(isSpam)
-#print(Pspam_x)
-#print(Pham_x)
-isSpam, Pspam_x, Pham_x = prediction(xham, Pspam, Pham, bspam, bham)
-test(dossier_test_hams, isSpam, Pspam_x, Pham_x, bspam, bham)
 
-"""
+# Calcul des probabilités a priori Pspam et Pham:
+isSpam, Pspam_x, Pham_x = prediction(xspam, Pspam, Pham, bspam, bham)
 
 # Calcul des erreurs avec la fonction test():
-"""
+erreurSpam = test(dossier_test_spams, isSpam, Pspam_x, Pham_x, bspam, bham)
+isSpam, Pspam_x, Pham_x = prediction(xham, Pspam, Pham, bspam, bham)
+erreurHam = test(dossier_test_hams, isSpam, Pspam_x, Pham_x, bspam, bham)
+print("Pourcentage d'erreur dans les mails SPAM :" + str(erreurSpam))
+print("Pourcentage d'erreur dans les mails HAM :" + str(erreurHam))
+print("Pourcentage moyen d'erreur :" +str((erreurSpam+erreurHam)/2))
