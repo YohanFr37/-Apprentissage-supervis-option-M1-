@@ -9,11 +9,10 @@ def lireMail(fichier, dictionnaire):
 	"""
 	f = open(fichier, "r", encoding="ascii", errors="surrogateescape")
 	mots = f.read().split(" ")
-
 	x = [False] * len(dictionnaire)
 
 	for i in range(len(dictionnaire)):
-		if (dictionnaire[i] in list(map(str.upper, mots))):
+		#if (dictionnaire[i] in list(map(str.upper, mots))):
 			x[i] = True
 	f.close()
 	return x
@@ -60,8 +59,8 @@ def prediction(x, Pspam, Pham, bspam, bham):
 		#print(x[i])
 	#print(np.sum(x))
 	isSpam = [len(x)]
-	print(len(x[0]))
-	print(len(x))
+	#print(len(x[0]))
+	#print(len(x))
 	Pspam_x = [len(x)]
 	Pham_x = [len(x)]
 	for i in range(len(x)):
@@ -82,10 +81,10 @@ def test(dossier, isSpam, Pspam, Pham, bspam, bham):
 		Retourne le taux d'erreur 
 	"""
 	fichiers = os.listdir(dossier)
-	print(len(isSpam))
-	print(len(Pspam))
+	#print(len(isSpam))
+	#print(len(Pspam))
 	for i in range(len(isSpam)):
-		print(i)
+		#print(i)
 		print('SPAM Numéro ' + str(i) + ' P(Y=SPAM | X=x) = ' + str(Pspam[i]) + ', P(Y=HAM | X=x) = ' + str(Pham[i]))
 		if(Pspam>Pham):
 			print('=> identifié comme un SPAM')
@@ -123,15 +122,15 @@ mHam = 200
 # Chargement du dictionnaire:
 dictionnaire = charge_dico("spam/dictionnaire1000en.txt")
 # print(dictionnaire)
-xbasespam = [int(len(fichiersspams)/10)]
-xbaseham = [int(len(fichiershams)/10)]
+xbasespam = [int(len(fichiersspams))]
+xbaseham = [int(len(fichiershams))]
 xspam = [mSpam]
 xham = [mHam]
 print('baseapp/spam')
-for i in range(int(len(fichiersspams)/10)):
+for i in range(int(len(fichiersspams))):
 	xbasespam.append(lireMail(dossier_spams+"/"+str(i)+".txt",dictionnaire))
 print('baseapp/ham')
-for i in range(int(len(fichiershams)/10)):
+for i in range(int(len(fichiershams))):
 	xbaseham.append(lireMail(dossier_hams+"/"+str(i)+".txt",dictionnaire))
 print('basetest/spam')
 for i in range(mSpam):
